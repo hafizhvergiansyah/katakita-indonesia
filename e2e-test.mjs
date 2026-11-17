@@ -174,8 +174,9 @@ async function main() {
 
     const startColumn = 7 - Math.floor(word.length / 2);
     for (const [offset, letter] of [...word.toUpperCase()].entries()) {
-      const selected = await evaluate(active, `(()=>{const tile=[...document.querySelectorAll('#tile-rack .rack-tile:not(.used)')].find(node=>node.firstChild.textContent.trim()===${JSON.stringify(letter)});if(!tile)return false;tile.click();document.querySelector('.cell[data-row="7"][data-col="${startColumn + offset}"]').click();return true})()`);
-      assert.ok(selected, `Huruf ${letter} tidak dapat dipilih dari rak.`);
+      const dropped = await evaluate(active, `(()=>{const tile=[...document.querySelectorAll('#tile-rack .rack-tile:not(.used)')].find(node=>node.firstChild.textContent.trim()===${JSON.stringify(letter)});const cell=document.querySelector('.cell[data-row="7"][data-col="${startColumn + offset}"]');if(!tile||!cell)return false;const from=tile.getBoundingClientRect();const to=cell.getBoundingClientRect();const pointerId=${offset + 1};const base={bubbles:true,pointerId,pointerType:${JSON.stringify(offset === 0 ? 'touch' : 'mouse')},button:0,buttons:1,clientX:from.left+from.width/2,clientY:from.top+from.height/2};tile.dispatchEvent(new PointerEvent('pointerdown',base));tile.dispatchEvent(new PointerEvent('pointermove',{...base,clientX:to.left+to.width/2,clientY:to.top+to.height/2}));tile.dispatchEvent(new PointerEvent('pointerup',{...base,buttons:0,clientX:to.left+to.width/2,clientY:to.top+to.height/2}));return true})()`);
+      assert.ok(dropped, `Huruf ${letter} tidak dapat didrop ke papan.`);
+      assert.equal(await evaluate(active, `document.querySelectorAll('#game-board .board-tile.new').length`), offset + 1);
     }
     await evaluate(active, `document.querySelector('#play-word').click()`);
     await waitFor(active, `document.querySelector('#turn-label').textContent === 'Giliran 2'`, `memainkan kata ${word}`);
@@ -194,7 +195,7 @@ async function main() {
     console.log(JSON.stringify({
       status: 'lulus', roomCode, invitation, time: '5 menit', firstTurn: activeName,
       dictionaryWord: word.toUpperCase(), synchronizedTiles: word.length,
-      passTurn: true, music: true, winner: waitingName
+      dragDrop: true, passTurn: true, music: true, winner: waitingName
     }, null, 2));
   } finally {
     for (const browserContextId of contexts) {
@@ -203,7 +204,14 @@ async function main() {
     cdp.close();
     if (chrome.process) {
       chrome.process.kill();
-      await rm(chrome.profile, { recursive: true, force: true });
+      await Promise.race([
+        new Promise(resolve => chrome.process.once('exit', resolve)),
+        delay(3000)
+      ]);
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        try { await rm(chrome.profile, { recursive: true, force: true }); break; }
+        catch (error) { if (!['EBUSY', 'EPERM'].includes(error.code) || attempt === 4) throw error; await delay(300); }
+      }
     }
   }
 }

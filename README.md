@@ -9,6 +9,7 @@ Permainan susun kata daring untuk dua pemain guest. Pemain dapat membuat ruang p
 - Dua pemain realtime dengan status online
 - Pilihan waktu 5, 10, 15, atau 30 menit per pemain
 - Papan 15 x 15, rak privat, skor server-side, menyerah, dan timeout
+- Keping dapat dipilih dengan klik atau didrag ke papan memakai mouse maupun sentuhan
 - Pemeriksaan kata utama dan silang memakai 78.064 kata Indonesia di server
 - Penentuan pemenang serta pembagian hasil
 - Backsound prosedural Web Audio tanpa aset berhak cipta
