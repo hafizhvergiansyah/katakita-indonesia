@@ -4,68 +4,139 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f4efe3">
-  <meta name="description" content="KataKita - permainan susun kata bernuansa Indonesia yang bisa dimainkan langsung di browser.">
-  <title>KataKita - Main Kata, Rangkai Cerita</title>
+  <meta name="description" content="KataKita - permainan susun kata daring untuk dua pemain guest.">
+  <title>KataKita - Susun Kata Bersama</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="multiplayer.css">
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
-  <aside class="side-nav" aria-label="Navigasi utama">
-    <a class="brand-mark" href="#permainan" aria-label="KataKita beranda"><span>K</span></a>
-    <nav class="nav-links">
-      <a class="nav-link" href="#permainan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Beranda</span></a>
-      <a class="nav-link active" href="#papan" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9.5 4v16M14.5 4v16M4 9.5h16M4 14.5h16"/></svg><span>Bermain</span></a>
-      <button class="nav-link" id="open-help" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.5 2.1c-.8.4-1.3 1-1.3 1.9M12 16.5v.1"/></svg><span>Panduan</span></button>
-      <button class="nav-link" id="sound-toggle" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h3l4 3V7L8 10zM16 9.5a4 4 0 0 1 0 5M18.5 7a7 7 0 0 1 0 10"/></svg><span>Suara</span></button>
-    </nav>
-    <div class="nav-footer"><div class="avatar" aria-label="Pemain: Kamu">HK</div></div>
-  </aside>
+  <header class="site-header">
+    <a class="wordmark" href="./" aria-label="KataKita beranda"><span>K</span><strong>KataKita</strong></a>
+    <div class="header-actions">
+      <span class="connection-status" id="connection-status"><i></i><b>Menyiapkan permainan</b></span>
+      <button class="round-button" id="music-toggle" type="button" aria-label="Nyalakan musik" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12M9 9l10-2M6.5 18A2.5 2.5 0 1 1 4 15.5 2.5 2.5 0 0 1 6.5 18ZM16.5 16A2.5 2.5 0 1 1 14 13.5 2.5 2.5 0 0 1 16.5 16Z"/></svg>
+      </button>
+      <button class="round-button" id="open-help" type="button" aria-label="Buka panduan">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.4 2.4 0 1 1 3.5 2.1c-.8.4-1.3 1-1.3 1.9M12 16.5v.1"/></svg>
+      </button>
+    </div>
+  </header>
 
-  <main class="app" id="permainan">
-    <header class="topbar">
-      <div><p class="eyebrow">Permainan santai</p><h1>KataKita</h1></div>
-      <div class="topbar-actions">
-        <div class="online-pill"><span></span> 1.284 pemain aktif</div>
-        <button class="icon-button" id="new-game" type="button" aria-label="Mulai permainan baru" title="Permainan baru"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 1-2.3-5.7L20 7.5M20 3v4.5h-4.5"/></svg></button>
-      </div>
-    </header>
-
-    <section class="game-layout" id="papan">
-      <div class="board-area">
-        <div class="match-bar">
-          <div class="player-card opponent"><div class="avatar small">RA</div><div><span>Raka</span><strong id="opponent-score">38</strong></div></div>
-          <div class="round-label"><span id="turn-label">Giliran 1</span><strong>Mode Ramah</strong></div>
-          <div class="player-card current"><div><span>Kamu</span><strong id="player-score">42</strong></div><div class="avatar small cream">HK</div></div>
+  <main class="page-shell">
+    <section class="screen entry-screen" id="entry-screen">
+      <div class="entry-copy">
+        <p class="eyebrow">Permainan kata daring</p>
+        <h1>Main kata.<br><em>Lawan temanmu.</em></h1>
+        <p class="entry-lead">Masuk sebagai guest, buat ruang privat, lalu kirim invitation link. Tidak perlu email atau kata sandi.</p>
+        <div class="feature-row">
+          <span><b>2</b> pemain</span>
+          <span><b>4</b> pilihan waktu</span>
+          <span><b>1</b> pemenang</span>
         </div>
-        <div class="board-frame"><div class="board" id="game-board" aria-label="Papan permainan 15 kali 15"></div></div>
-        <div class="rack-zone">
-          <div class="rack-label"><span>Hurufmu</span><small><b id="bag-count">85</b> keping tersisa</small></div>
-          <div class="tile-rack" id="tile-rack" aria-label="Rak huruf pemain"></div>
-          <div class="rack-tools">
-            <button class="tool-button" id="shuffle-tiles" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3c4 0 6 10 10 10h3M17 4l3 3-3 3M4 17h3c1.5 0 2.7-1.4 3.8-3M17 14l3 3-3 3"/></svg>Acak</button>
-            <button class="tool-button" id="recall-tiles" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5M5 12h9a5 5 0 0 0 5-5"/></svg>Tarik kembali</button>
+        <div class="floating-tiles" aria-hidden="true"><i>K</i><i>A</i><i>T</i><i>A</i></div>
+      </div>
+
+      <div class="entry-card">
+        <div class="backend-notice hidden" id="backend-notice">
+          Backend multiplayer belum terhubung. Masukkan konfigurasi Supabase di <code>js/config.js</code>.
+        </div>
+        <div class="invite-notice hidden" id="invite-notice">
+          <span>Kamu mendapat undangan</span><strong id="invited-room-code"></strong>
+        </div>
+        <form id="guest-form">
+          <label class="field-label" for="guest-name">Nama pemain</label>
+          <input class="text-input" id="guest-name" name="guestName" maxlength="20" autocomplete="nickname" placeholder="Contoh: Hafizh" required>
+
+          <fieldset class="time-picker" id="time-picker">
+            <legend>Pilih waktu per pemain</legend>
+            <label><input type="radio" name="timeLimit" value="300000"><span><b>5</b> menit<small>Kilat</small></span></label>
+            <label><input type="radio" name="timeLimit" value="600000" checked><span><b>10</b> menit<small>Santai</small></span></label>
+            <label><input type="radio" name="timeLimit" value="900000"><span><b>15</b> menit<small>Lapang</small></span></label>
+            <label><input type="radio" name="timeLimit" value="1800000"><span><b>30</b> menit<small>Panjang</small></span></label>
+          </fieldset>
+
+          <button class="primary-button wide" id="create-room" type="submit">Buat permainan baru</button>
+        </form>
+
+        <div class="divider"><span>atau gabung dengan kode</span></div>
+        <form class="join-form" id="join-form">
+          <input class="text-input code-input" id="room-code" maxlength="6" autocomplete="off" placeholder="ABC123" aria-label="Kode ruang">
+          <button class="secondary-button" type="submit">Gabung</button>
+        </form>
+        <p class="form-status" id="entry-status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="screen lobby-screen hidden" id="lobby-screen">
+      <div class="lobby-card">
+        <p class="eyebrow">Ruang privat</p>
+        <h2>Undang teman bermain</h2>
+        <p>Bagikan tautan berikut. Permainan dimulai setelah dua pemain siap.</p>
+        <div class="invite-link-box"><span id="invite-link"></span><button id="copy-invite" type="button">Salin link</button></div>
+        <button class="share-button" id="share-invite" type="button">Bagikan undangan</button>
+        <div class="room-meta"><span>Kode <b id="lobby-code"></b></span><span>Waktu <b id="lobby-time"></b></span></div>
+      </div>
+      <div class="players-lobby">
+        <article class="lobby-player" id="lobby-player-1"><div class="avatar">1</div><div><span>Pemain 1</span><strong>Menunggu...</strong></div><i>Belum siap</i></article>
+        <div class="versus-mark">VS</div>
+        <article class="lobby-player empty" id="lobby-player-2"><div class="avatar">2</div><div><span>Pemain 2</span><strong>Menunggu teman</strong></div><i>Belum bergabung</i></article>
+      </div>
+      <div class="lobby-actions">
+        <button class="primary-button" id="ready-button" type="button">Saya siap</button>
+        <button class="text-button danger" id="leave-room" type="button">Keluar dari ruang</button>
+      </div>
+      <p class="form-status" id="lobby-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="screen game-screen hidden" id="game-screen">
+      <div class="game-layout" id="papan">
+        <div class="board-area">
+          <div class="match-bar">
+            <div class="player-card opponent"><div class="avatar small" id="opponent-avatar">P2</div><div><span id="opponent-name">Lawan</span><strong id="opponent-score">0</strong><time id="opponent-timer">10:00</time></div></div>
+            <div class="round-label"><span id="turn-label">Giliran 1</span><strong id="turn-message">Menunggu...</strong></div>
+            <div class="player-card current"><div><span id="player-name">Kamu</span><strong id="player-score">0</strong><time id="player-timer">10:00</time></div><div class="avatar small cream" id="player-avatar">P1</div></div>
+          </div>
+          <div class="board-frame"><div class="board" id="game-board" aria-label="Papan permainan 15 kali 15"></div></div>
+          <div class="rack-zone">
+            <div class="rack-label"><span>Hurufmu</span><small><b id="bag-count">86</b> keping tersisa</small></div>
+            <div class="tile-rack" id="tile-rack" aria-label="Rak huruf pemain"></div>
+            <div class="rack-tools">
+              <button class="tool-button" id="shuffle-tiles" type="button">Acak</button>
+              <button class="tool-button" id="recall-tiles" type="button">Tarik kembali</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <aside class="game-panel">
-        <div class="panel-heading"><div><p class="eyebrow">Giliran kamu</p><h2>Rangkai kata terbaik</h2></div><div class="timer" aria-label="Sisa waktu"><span id="timer">04:58</span></div></div>
-        <div class="challenge-card"><div class="challenge-copy"><span class="challenge-kicker">Tantangan harian</span><strong>Gunakan minimal 5 huruf</strong><p>Dapatkan bonus 10 poin untuk kata pertamamu.</p></div><div class="sun-shape" aria-hidden="true"><span>KATA</span></div></div>
-        <div class="score-preview"><span>Pratinjau nilai</span><strong><b id="preview-score">0</b> poin</strong></div>
-        <div class="action-stack"><button class="primary-button" id="play-word" type="button">Mainkan kata<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button><button class="secondary-button" id="pass-turn" type="button">Lewati giliran</button></div>
-        <div class="tip-card"><div class="tip-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M8.8 15.5A6 6 0 1 1 15 15.4c-.7.5-1 1-1 1.6h-4c0-.6-.4-1.1-1.2-1.5z"/></svg></div><div><strong>Petunjuk cepat</strong><p>Klik huruf, lalu pilih kotak papan. Klik lagi huruf di papan untuk mengembalikannya.</p></div></div>
-        <div class="legend" aria-label="Legenda bonus papan"><span><i class="legend-dot triple-word"></i> 3x kata</span><span><i class="legend-dot double-word"></i> 2x kata</span><span><i class="legend-dot triple-letter"></i> 3x huruf</span><span><i class="legend-dot double-letter"></i> 2x huruf</span></div>
-      </aside>
+        <aside class="game-panel">
+          <div class="panel-heading"><div><p class="eyebrow">Pertandingan daring</p><h2 id="panel-title">Rangkai kata terbaik</h2></div><span class="live-badge"><i></i> Live</span></div>
+          <div class="turn-card"><span>Status giliran</span><strong id="turn-card-message">Menunggu data permainan</strong><p id="online-status">Menghubungkan kedua pemain...</p></div>
+          <div class="score-preview"><span>Pratinjau nilai</span><strong><b id="preview-score">0</b> poin</strong></div>
+          <div class="action-stack"><button class="primary-button" id="play-word" type="button">Mainkan kata</button><button class="secondary-button" id="pass-turn" type="button">Lewati giliran</button></div>
+          <button class="text-button danger" id="resign-game" type="button">Menyerah</button>
+          <div class="tip-card"><div class="tip-icon">i</div><div><strong>Petunjuk</strong><p>Pilih huruf lalu kotak papan. Semua huruf baru harus satu baris atau kolom.</p></div></div>
+        </aside>
+      </div>
     </section>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
   <dialog class="help-dialog" id="help-dialog">
     <button class="dialog-close" id="close-help" type="button" aria-label="Tutup panduan">x</button>
     <p class="eyebrow">Cara bermain</p><h2>Susun, sambungkan, menangkan.</h2>
-    <ol><li>Pilih satu keping huruf dari rakmu.</li><li>Letakkan pada kotak kosong dan sambungkan dengan kata di papan.</li><li>Semua huruf baru harus berada dalam satu baris atau kolom.</li><li>Tekan <b>Mainkan kata</b> untuk menghitung poin.</li></ol>
-    <p class="dialog-note">Versi demo ini belum memeriksa kata di kamus, jadi kamu bebas bereksperimen.</p>
+    <ol><li>Masuk sebagai guest dan buat atau gabung ke ruang.</li><li>Bagikan invitation link sampai dua pemain bergabung.</li><li>Susun huruf saat mendapat giliran sebelum waktumu habis.</li><li>Pemain dengan skor akhir tertinggi menjadi pemenang.</li></ol>
   </dialog>
-  <script src="script.js"></script>
+
+  <dialog class="result-dialog" id="result-dialog">
+    <div class="result-burst" aria-hidden="true">K</div>
+    <p class="eyebrow">Pertandingan selesai</p><h2 id="result-title">Pemenang!</h2>
+    <p id="result-reason"></p>
+    <div class="final-scores" id="final-scores"></div>
+    <div class="result-actions"><button class="primary-button" id="play-again" type="button">Kembali ke beranda</button><button class="secondary-button" id="share-result" type="button">Bagikan hasil</button></div>
+  </dialog>
+
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
