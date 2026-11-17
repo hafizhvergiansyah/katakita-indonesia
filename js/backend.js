@@ -33,15 +33,30 @@ export const resignGame = roomId => rpc("resign_game", { p_room_id: roomId });
 export const claimTimeout = roomId => rpc("claim_timeout", { p_room_id: roomId });
 export const roomSnapshot = roomId => rpc("get_room_snapshot", { p_room_id: roomId });
 
+function subscribe(channel, onSubscribed) {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error("Koneksi realtime timeout.")), 10000);
+    channel.subscribe(async status => {
+      if (status === "SUBSCRIBED") {
+        window.clearTimeout(timer);
+        try { if (onSubscribed) await onSubscribed(); resolve(); } catch (error) { reject(error); }
+      } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
+        window.clearTimeout(timer);
+        reject(new Error("Koneksi realtime gagal: " + status));
+      }
+    });
+  });
+}
+
 export async function subscribeToRoom(roomId, userId, onChange, onPresence) {
   await unsubscribeRoom();
   roomChannel = supabase().channel("room-db-" + roomId)
     .on("postgres_changes", { event: "*", schema: "public", table: "rooms", filter: "id=eq." + roomId }, onChange)
-    .on("postgres_changes", { event: "*", schema: "public", table: "room_players", filter: "room_id=eq." + roomId }, onChange)
-    .subscribe();
+    .on("postgres_changes", { event: "*", schema: "public", table: "room_players", filter: "room_id=eq." + roomId }, onChange);
+  await subscribe(roomChannel);
   presenceChannel = supabase().channel("room-presence-" + roomId, { config: { presence: { key: userId } } });
   presenceChannel.on("presence", { event: "sync" }, () => onPresence(Object.keys(presenceChannel.presenceState()).length));
-  await presenceChannel.subscribe(async status => { if (status === "SUBSCRIBED") await presenceChannel.track({ online_at: new Date().toISOString() }); });
+  await subscribe(presenceChannel, () => presenceChannel.track({ online_at: new Date().toISOString() }));
 }
 export async function unsubscribeRoom() {
   if (roomChannel) await supabase().removeChannel(roomChannel);

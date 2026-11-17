@@ -9,7 +9,7 @@ add("double-letter",[[0,3],[0,11],[2,6],[2,8],[3,0],[3,7],[3,14],[6,2],[6,6],[6,
 export const premiumAt = (row,col) => premiums.get(row + "-" + col) || "";
 export const tileValue = letter => LETTER_VALUES[letter] || 0;
 export function formatTime(milliseconds) { const value=Math.max(0,Math.ceil(milliseconds/1000)); return String(Math.floor(value/60)).padStart(2,"0")+":"+String(value%60).padStart(2,"0"); }
-// ponytail: MVP scores the main word only; add cross-word and KBBI validation with the dictionary service.
+// ponytail: this browser preview scores new tiles only; the server adds cross-word points and validates the dictionary.
 export function previewScore(placements) { let score=0,word=1; placements.forEach(tile=>{const premium=premiumAt(tile.row,tile.col);score+=tileValue(tile.letter)*(premium==="double-letter"?2:premium==="triple-letter"?3:1);if(premium==="double-word")word*=2;if(premium==="triple-word")word*=3});return score*word; }
 export function validatePlacement(board, placements) {
   if (!placements.length) return "Letakkan minimal satu huruf.";

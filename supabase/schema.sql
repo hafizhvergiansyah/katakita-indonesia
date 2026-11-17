@@ -1,4 +1,4 @@
-﻿create extension if not exists pgcrypto;
+create extension if not exists pgcrypto;
 
 create table if not exists public.rooms (
   id uuid primary key default gen_random_uuid(),
@@ -52,14 +52,24 @@ create table if not exists public.moves (
 create index if not exists room_players_user_idx on public.room_players(user_id);
 create index if not exists moves_room_idx on public.moves(room_id,turn_no);
 
+create table if not exists public.valid_words (
+  word text primary key check (word ~ '^[a-z]{2,15}$')
+);
+
 alter table public.rooms enable row level security;
 alter table public.room_players enable row level security;
 alter table public.game_private enable row level security;
 alter table public.moves enable row level security;
+alter table public.valid_words enable row level security;
 
 create or replace function public.is_room_member(p_room_id uuid)
 returns boolean language sql stable security definer set search_path=public as $$
   select exists(select 1 from public.room_players where room_id=p_room_id and user_id=auth.uid());
+$$;
+
+create or replace function public.is_valid_word(p_word text)
+returns boolean language sql stable security definer set search_path=public as $$
+  select exists(select 1 from public.valid_words where word=lower(p_word));
 $$;
 
 create policy "members read rooms" on public.rooms for select to authenticated using (public.is_room_member(id));
@@ -182,7 +192,6 @@ begin
   return v_winner;
 end $$;
 
--- ponytail: MVP validates placement and scores the main word; add cross-word KBBI checks in this transaction.
 create or replace function public.play_move(p_room_id uuid,p_placements jsonb)
 returns jsonb language plpgsql security definer set search_path=public as $$
 declare
@@ -192,6 +201,7 @@ declare
   v_rows integer[]:='{}'; v_cols integer[]:='{}'; v_used integer[]:='{}'; v_new_keys text[]:='{}';
   v_same_row boolean; v_same_col boolean; v_horizontal boolean; v_connected boolean:=false;
   v_min integer; v_max integer; v_value integer; v_word text:=''; v_score integer:=0; v_word_multiplier integer:=1; v_premium text;
+  v_cross_word text; v_cross_score integer; v_cross_multiplier integer; v_cross_length integer;
   v_start_row integer; v_start_col integer; v_step_row integer; v_step_col integer;
   v_elapsed integer; v_remaining integer; v_draw integer; v_bag text[];
 begin
@@ -229,7 +239,7 @@ begin
   if cardinality(v_rows)=1 then
     v_horizontal:=not (v_room.board ? ((v_first_row-1)||'-'||v_first_col) or v_room.board ? ((v_first_row+1)||'-'||v_first_col));
   else v_horizontal:=v_same_row; end if;
-  if jsonb_object_length(v_room.board)=0 then
+  if v_room.board='{}'::jsonb then
     if not ('7-7'=any(v_new_keys)) then raise exception 'Kata pertama harus melewati kotak tengah.'; end if;
   else
     for v_value in 1..cardinality(v_rows) loop
@@ -256,7 +266,28 @@ begin
     else v_score:=v_score+public.letter_score(v_letter); end if;
     v_row:=v_row+v_step_row; v_col:=v_col+v_step_col;
   end loop;
+  if not public.is_valid_word(v_word) then raise exception 'Kata tidak ada di kamus: %',upper(v_word); end if;
   v_score:=v_score*v_word_multiplier;
+  for v_value in 1..cardinality(v_rows) loop
+    v_row:=v_rows[v_value]; v_col:=v_cols[v_value];
+    v_step_row:=case when v_horizontal then 1 else 0 end; v_step_col:=case when v_horizontal then 0 else 1 end;
+    v_start_row:=v_row; v_start_col:=v_col;
+    while v_new_board ? ((v_start_row-v_step_row)||'-'||(v_start_col-v_step_col)) loop v_start_row:=v_start_row-v_step_row; v_start_col:=v_start_col-v_step_col; end loop;
+    v_cross_word:=''; v_cross_score:=0; v_cross_multiplier:=1; v_cross_length:=0; v_row:=v_start_row; v_col:=v_start_col;
+    while v_new_board ? (v_row||'-'||v_col) loop
+      v_position:=v_row||'-'||v_col; v_letter:=v_new_board->>v_position; v_cross_word:=v_cross_word||v_letter; v_cross_length:=v_cross_length+1;
+      if v_position=any(v_new_keys) then
+        v_premium:=public.premium_at(v_row,v_col);
+        v_cross_score:=v_cross_score+public.letter_score(v_letter)*case when v_premium='double-letter' then 2 when v_premium='triple-letter' then 3 else 1 end;
+        if v_premium='double-word' then v_cross_multiplier:=v_cross_multiplier*2; elsif v_premium='triple-word' then v_cross_multiplier:=v_cross_multiplier*3; end if;
+      else v_cross_score:=v_cross_score+public.letter_score(v_letter); end if;
+      v_row:=v_row+v_step_row; v_col:=v_col+v_step_col;
+    end loop;
+    if v_cross_length>1 then
+      if not public.is_valid_word(v_cross_word) then raise exception 'Kata silang tidak ada di kamus: %',upper(v_cross_word); end if;
+      v_score:=v_score+(v_cross_score*v_cross_multiplier);
+    end if;
+  end loop;
   if cardinality(v_used)=7 then v_score:=v_score+50; end if;
   select coalesce(jsonb_agg(value order by ord),'[]'::jsonb) into v_new_rack from jsonb_array_elements(v_rack) with ordinality as item(value,ord) where not ((ord-1)::integer=any(v_used));
   v_bag:=v_private.bag; v_draw:=least(7-jsonb_array_length(v_new_rack),coalesce(cardinality(v_bag),0));
@@ -324,7 +355,8 @@ begin
   return public.get_room_snapshot(p_room_id);
 end $$;
 
-revoke all on public.rooms,public.room_players,public.game_private,public.moves from anon,authenticated;
+revoke all on public.rooms,public.room_players,public.game_private,public.moves,public.valid_words from anon,authenticated;
+revoke all on function public.is_valid_word(text) from public,anon,authenticated;
 grant select on public.rooms,public.room_players,public.moves to authenticated;
 grant execute on function public.is_room_member(uuid),public.create_room(text,integer),public.join_room(text,text),public.set_ready(uuid,boolean),public.get_room_snapshot(uuid),public.play_move(uuid,jsonb),public.pass_turn(uuid),public.resign_game(uuid),public.claim_timeout(uuid) to authenticated;
 
