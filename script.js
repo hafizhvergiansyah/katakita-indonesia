@@ -1,4 +1,4 @@
-const BOARD_SIZE=15;
+﻿const BOARD_SIZE=15;
 const letterValues={A:1,B:3,C:3,D:2,E:1,F:4,G:2,H:4,I:1,J:8,K:5,L:1,M:3,N:1,O:1,P:3,Q:10,R:1,S:1,T:1,U:1,V:4,W:4,X:8,Y:4,Z:10};
 const letterBag=("AAAAAAAAAAAAAAAABBBBCCCCDDDDDEEEEEEEEFFGGGGGHHHHIIIIIIIIII"+"JJKKKKLLLLLMMMMMNNNNNNNNNOOOOOOPPPPQRRRRRRRRSSSSSSS"+"TTTTTTUUUUUUVVWWXYYZ").split("");
 const premiumCells=new Map();
@@ -67,6 +67,7 @@ function inferDirection(row,column){if(getTileAt(row,column-1)||getTileAt(row,co
 function neighbors(row,column){return[[row-1,column],[row+1,column],[row,column-1],[row,column+1]].filter(function(position){return position[0]>=0&&position[0]<BOARD_SIZE&&position[1]>=0&&position[1]<BOARD_SIZE})}
 function isContiguous(positions,direction){const fixedAxis=direction==="horizontal"?positions[0][0]:positions[0][1];const variableValues=positions.map(function(position){return direction==="horizontal"?position[1]:position[0]});const minimum=Math.min.apply(null,variableValues);const maximum=Math.max.apply(null,variableValues);for(let value=minimum;value<=maximum;value+=1){const row=direction==="horizontal"?fixedAxis:value;const column=direction==="horizontal"?value:fixedAxis;if(!getTileAt(row,column))return false}return true}
 function collectWord(row,column,direction){const rowStep=direction==="vertical"?1:0;const columnStep=direction==="horizontal"?1:0;let startRow=row;let startColumn=column;while(getTileAt(startRow-rowStep,startColumn-columnStep)){startRow-=rowStep;startColumn-=columnStep}let word="";let currentRow=startRow;let currentColumn=startColumn;while(getTileAt(currentRow,currentColumn)){word+=getTileAt(currentRow,currentColumn).letter;currentRow+=rowStep;currentColumn+=columnStep}return word}
+// ponytail: Demo validates placement only; add a KBBI-backed service for production word checks.
 function playWord(){const validation=validatePlacement();if(!validation.valid){showToast(validation.message);return}const earnedScore=calculateScore()+(placedTiles.size>=5?10:0);placedTiles.forEach(function(currentTile,positionKey){fixedTiles.set(positionKey,currentTile)});placedTiles.clear();playerScore+=earnedScore;turn+=1;timerSeconds=300;refillRack();renderAll();showToast('Kata "'+validation.word+'" dimainkan. +'+earnedScore+' poin!')}
 function refillRack(){while(rack.length<7&&bagRemaining>0){const letter=letterBag[Math.floor(Math.random()*letterBag.length)];rack.push(tile(letter));bagRemaining-=1}}
 function recallTiles(){placedTiles.forEach(function(currentTile){rack.push(currentTile)});placedTiles.clear();selectedTileId=null;renderAll()}

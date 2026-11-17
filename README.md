@@ -17,3 +17,7 @@ Buka `index.html` di browser, atau jalankan server statis dari folder proyek.
 ## Demo
 
 https://hafizhvergiansyah.github.io/katakita-indonesia/
+
+## Pemeriksaan
+
+Jalankan `node smoke-test.mjs`.
