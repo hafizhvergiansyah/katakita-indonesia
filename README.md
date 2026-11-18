@@ -1,13 +1,13 @@
 ﻿# KataKita Indonesia
 
-Permainan susun kata untuk melawan bot lokal atau teman secara daring. Pemain dapat memilih Bahasa Indonesia atau Jawa, membuat ruang privat, bermain realtime, dan mendapatkan hasil pertandingan.
+Permainan susun kata untuk melawan bot lokal atau teman secara daring. Pemain dapat memilih Bahasa Indonesia, Jawa, atau Jambi, membuat ruang privat, bermain realtime, dan mendapatkan hasil pertandingan.
 
 ## Fitur
 
 - Guest tanpa email atau password
 - Mode lawan bot yang berjalan langsung di browser
-- Bot memiliki jeda berpikir dan tidak selalu memilih langkah bernilai tertinggi
-- Pilihan kamus Bahasa Indonesia atau Jawa
+- Bot memiliki jeda berpikir acak 5-7 detik dan tidak selalu memilih langkah bernilai tertinggi
+- Pilihan kamus Bahasa Indonesia, Jawa, atau Jambi
 - Invitation link dan kode ruang enam karakter
 - Dua pemain realtime dengan status online
 - Pilihan waktu 5, 10, 15, atau 30 menit per pemain
@@ -29,7 +29,7 @@ Permainan susun kata untuk melawan bot lokal atau teman secara daring. Pemain da
 
 Publishable key memang berada di frontend. Keamanan data tetap dijaga oleh RLS dan fungsi database; jangan pernah memasukkan secret/service-role key.
 
-Checker Indonesia menggunakan wordlist Public Domain dari `za/id-wordlist`. Checker Jawa memakai data MIT dari `nsulistiyawan/sastra-jawa`, dinormalisasi menjadi 19.152 kata huruf A-Z. Keduanya bukan layanan atau dataset resmi; validasi online dilakukan di transaksi Supabase agar kedua pemain selalu menerima hasil yang sama.
+Checker Indonesia menggunakan wordlist Public Domain dari `za/id-wordlist`. Checker Jawa memakai data MIT dari `nsulistiyawan/sastra-jawa`, dinormalisasi menjadi 19.152 kata huruf A-Z. Checker Jambi memuat 2.524 lema dari publikasi Kantor Bahasa Provinsi Jambi tahun 2021. Validasi online dilakukan di transaksi Supabase agar kedua pemain selalu menerima hasil yang sama.
 
 ## Menjalankan lokal
 

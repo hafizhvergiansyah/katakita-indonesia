@@ -24,7 +24,16 @@ async function rpc(name, params = {}) {
   if (error) throw error;
   return data;
 }
-export const createRoom = (name, timeLimit, language) => rpc("create_room", { p_name: name, p_time_limit_ms: timeLimit, p_language: language });
+export async function createRoom(name, timeLimit, language) {
+  try {
+    return await rpc("create_room", { p_name: name, p_time_limit_ms: timeLimit, p_language: language });
+  } catch (error) {
+    const oldSignature = error?.code === "PGRST202" || /create_room.*schema cache/i.test(error?.message || "");
+    if (!oldSignature) throw error;
+    if (language !== "id") throw new Error("Multiplayer bahasa ini memerlukan pembaruan database. Gunakan lawan bot sementara.");
+    return rpc("create_room", { p_name: name, p_time_limit_ms: timeLimit });
+  }
+}
 export const joinRoom = (code, name) => rpc("join_room", { p_code: code.toUpperCase(), p_name: name });
 export const setReady = (roomId, ready) => rpc("set_ready", { p_room_id: roomId, p_ready: ready });
 export const playMove = (roomId, placements) => rpc("play_move", { p_room_id: roomId, p_placements: placements });

@@ -6,7 +6,7 @@ create table if not exists public.rooms (
   status text not null default 'waiting' check (status in ('waiting','playing','finished')),
   host_id uuid not null references auth.users(id) on delete cascade,
   time_limit_ms integer not null check (time_limit_ms in (300000,600000,900000,1800000)),
-  language text not null default 'id' check (language in ('id','jv')),
+  language text not null default 'id' check (language in ('id','jv','jbi')),
   current_player_id uuid references auth.users(id),
   turn_started_at timestamptz,
   turn_no integer not null default 1,
@@ -61,12 +61,17 @@ create table if not exists public.valid_words_javanese (
   word text primary key check (word ~ '^[a-z]{2,15}$')
 );
 
+create table if not exists public.valid_words_jambi (
+  word text primary key check (word ~ '^[a-z]{2,15}$')
+);
+
 alter table public.rooms enable row level security;
 alter table public.room_players enable row level security;
 alter table public.game_private enable row level security;
 alter table public.moves enable row level security;
 alter table public.valid_words enable row level security;
 alter table public.valid_words_javanese enable row level security;
+alter table public.valid_words_jambi enable row level security;
 
 create or replace function public.is_room_member(p_room_id uuid)
 returns boolean language sql stable security definer set search_path=public as $$
@@ -75,8 +80,9 @@ $$;
 
 create or replace function public.is_valid_word(p_word text,p_language text)
 returns boolean language sql stable security definer set search_path=public as $$
-  select case when p_language='jv'
-    then exists(select 1 from public.valid_words_javanese where word=lower(p_word))
+  select case p_language
+    when 'jv' then exists(select 1 from public.valid_words_javanese where word=lower(p_word))
+    when 'jbi' then exists(select 1 from public.valid_words_jambi where word=lower(p_word))
     else exists(select 1 from public.valid_words where word=lower(p_word)) end;
 $$;
 
@@ -120,7 +126,7 @@ begin
   if auth.uid() is null then raise exception 'Sesi guest tidak valid.'; end if;
   if char_length(trim(p_name)) not between 1 and 20 then raise exception 'Nama harus 1 sampai 20 karakter.'; end if;
   if p_time_limit_ms not in (300000,600000,900000,1800000) then raise exception 'Pilihan waktu tidak valid.'; end if;
-  if p_language not in ('id','jv') then raise exception 'Pilihan bahasa tidak valid.'; end if;
+  if p_language not in ('id','jv','jbi') then raise exception 'Pilihan bahasa tidak valid.'; end if;
   loop
     v_code:=upper(substr(replace(gen_random_uuid()::text,'-',''),1,6));
     exit when not exists(select 1 from public.rooms where code=v_code);
@@ -364,7 +370,7 @@ begin
   return public.get_room_snapshot(p_room_id);
 end $$;
 
-revoke all on public.rooms,public.room_players,public.game_private,public.moves,public.valid_words,public.valid_words_javanese from anon,authenticated;
+revoke all on public.rooms,public.room_players,public.game_private,public.moves,public.valid_words,public.valid_words_javanese,public.valid_words_jambi from anon,authenticated;
 revoke all on function public.is_valid_word(text,text) from public,anon,authenticated;
 grant select on public.rooms,public.room_players,public.moves to authenticated;
 grant execute on function public.is_room_member(uuid),public.create_room(text,integer,text),public.join_room(text,text),public.set_ready(uuid,boolean),public.get_room_snapshot(uuid),public.play_move(uuid,jsonb),public.pass_turn(uuid),public.resign_game(uuid),public.claim_timeout(uuid) to authenticated;

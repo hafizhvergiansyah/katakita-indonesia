@@ -2,8 +2,8 @@ import { premiumAt, tileValue, validatePlacement } from "./rules.js";
 
 export const LOCAL_PLAYER_ID = "local-player";
 const BOT_ID = "local-bot";
-const BOT_THINK_MIN_MS = 2500;
-const BOT_THINK_MAX_MS = 5500;
+const BOT_THINK_MIN_MS = 5000;
+const BOT_THINK_MAX_MS = 7000;
 const LETTER_BAG = "A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,B,B,B,B,C,C,C,D,D,D,D,D,E,E,E,E,E,E,E,E,F,F,G,G,G,G,G,H,H,H,H,I,I,I,I,I,I,I,I,I,I,J,K,K,K,K,L,L,L,L,L,M,M,M,M,M,N,N,N,N,N,N,N,N,N,O,O,O,O,O,O,P,P,P,P,Q,R,R,R,R,R,R,R,S,S,S,S,S,S,S,T,T,T,T,T,T,U,U,U,U,U,U,V,V,W,W,X,Y,Y,Z".split(",");
 const dictionaryCache = new Map();
 let game = null;
@@ -26,7 +26,7 @@ function makeDictionary(words) {
 
 async function loadDictionary(language) {
   if (dictionaryCache.has(language)) return dictionaryCache.get(language);
-  const file = language === "jv" ? "javanese-words.txt" : "indonesian-words.txt";
+  const file = { jv: "javanese-words.txt", jbi: "jambi-words.txt" }[language] || "indonesian-words.txt";
   const response = await fetch(new URL("../data/" + file, import.meta.url));
   if (!response.ok) throw new Error("Kamus gagal dimuat.");
   const dictionary = makeDictionary((await response.text()).split(/\r?\n/));

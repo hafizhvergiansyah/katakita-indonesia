@@ -19,9 +19,14 @@ const botMove = findBotMove({}, ["A", "K", "A", "T"], botDictionary);
 assert.equal(botMove.length, 4);
 assert.ok(botMove.some(tile => tile.row === 7 && tile.col === 7));
 
-globalThis.fetch = async () => ({ ok: true, text: async () => "aa\nata\nkata\n" });
+const requestedDictionaries = [];
+globalThis.fetch = async url => { requestedDictionaries.push(String(url)); return { ok: true, text: async () => "aa\nata\nkata\n" }; };
 const localGame = await createBotGame({ playerName: "Tester", timeLimit: 300000, language: "id" });
 await assert.rejects(playBotGameMove([{ row: 7, col: 7, rack_index: 0 }]), /tidak ada di kamus/i);
 assert.equal(getBotSnapshot().players[0].remaining_ms, localGame.players[0].remaining_ms);
-assert.match(await readFile(new URL("./js/bot-game.js", import.meta.url), "utf8"), /BOT_THINK_MIN_MS = 2500/);
+await createBotGame({ playerName: "Tester Jambi", timeLimit: 300000, language: "jbi" });
+assert.match(requestedDictionaries.at(-1), /jambi-words\.txt$/);
+const botSource = await readFile(new URL("./js/bot-game.js", import.meta.url), "utf8");
+assert.match(botSource, /BOT_THINK_MIN_MS = 5000/);
+assert.match(botSource, /BOT_THINK_MAX_MS = 7000/);
 console.log("Bot game test KataKita lulus.");

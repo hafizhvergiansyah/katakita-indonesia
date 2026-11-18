@@ -125,7 +125,7 @@ async function main() {
 
   try {
     const playerOne = await createPage(appUrl);
-    await evaluate(playerOne, `document.querySelector('#guest-name').value='Pemain Satu';document.querySelector('input[value="300000"]').click();document.querySelector('#guest-form').requestSubmit()`);
+    await evaluate(playerOne, `document.querySelector('#guest-name').value='Pemain Satu';document.querySelector('input[name="opponent"][value="online"]').click();document.querySelector('input[value="300000"]').click();document.querySelector('#guest-form').requestSubmit()`);
     await waitFor(playerOne, `!document.querySelector('#lobby-screen').classList.contains('hidden')`, 'pemain pertama membuat ruang');
     assert.equal(await evaluate(playerOne, `document.querySelector('#lobby-time').textContent`), '5 menit');
     const invitation = await evaluate(playerOne, `document.querySelector('#invite-link').textContent`);
