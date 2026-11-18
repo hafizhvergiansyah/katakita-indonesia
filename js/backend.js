@@ -24,7 +24,7 @@ async function rpc(name, params = {}) {
   if (error) throw error;
   return data;
 }
-export const createRoom = (name, timeLimit) => rpc("create_room", { p_name: name, p_time_limit_ms: timeLimit });
+export const createRoom = (name, timeLimit, language) => rpc("create_room", { p_name: name, p_time_limit_ms: timeLimit, p_language: language });
 export const joinRoom = (code, name) => rpc("join_room", { p_code: code.toUpperCase(), p_name: name });
 export const setReady = (roomId, ready) => rpc("set_ready", { p_room_id: roomId, p_ready: ready });
 export const playMove = (roomId, placements) => rpc("play_move", { p_room_id: roomId, p_placements: placements });

@@ -27,20 +27,20 @@
   <main class="page-shell">
     <section class="screen entry-screen" id="entry-screen">
       <div class="entry-copy">
-        <p class="eyebrow">Permainan kata daring</p>
-        <h1>Main kata.<br><em>Lawan temanmu.</em></h1>
-        <p class="entry-lead">Masuk sebagai guest, buat ruang privat, lalu kirim invitation link. Tidak perlu email atau kata sandi.</p>
+        <p class="eyebrow">Permainan susun kata</p>
+        <h1>Main kata.<br><em>Pilih lawanmu.</em></h1>
+        <p class="entry-lead">Main langsung melawan bot atau buat ruang privat untuk teman. Tidak perlu email atau kata sandi.</p>
         <div class="feature-row">
-          <span><b>2</b> pemain</span>
+          <span><b>2</b> bahasa</span>
+          <span><b>2</b> mode lawan</span>
           <span><b>4</b> pilihan waktu</span>
-          <span><b>1</b> pemenang</span>
         </div>
         <div class="floating-tiles" aria-hidden="true"><i>K</i><i>A</i><i>T</i><i>A</i></div>
       </div>
 
       <div class="entry-card">
         <div class="backend-notice hidden" id="backend-notice">
-          Backend multiplayer belum terhubung. Masukkan konfigurasi Supabase di <code>js/config.js</code>.
+          Backend online belum terhubung. Mode lawan bot tetap dapat dimainkan di perangkat ini.
         </div>
         <div class="invite-notice hidden" id="invite-notice">
           <span>Kamu mendapat undangan</span><strong id="invited-room-code"></strong>
@@ -48,6 +48,19 @@
         <form id="guest-form">
           <label class="field-label" for="guest-name">Nama pemain</label>
           <input class="text-input" id="guest-name" name="guestName" maxlength="20" autocomplete="nickname" placeholder="Contoh: Hafizh" required>
+
+          <div class="game-options" id="game-options">
+            <fieldset class="choice-picker" id="opponent-picker">
+              <legend>Pilih lawan</legend>
+              <label><input type="radio" name="opponent" value="bot" checked><span><b>Bot</b><small>Main langsung</small></span></label>
+              <label><input type="radio" name="opponent" value="online"><span><b>Teman</b><small>Ruang privat</small></span></label>
+            </fieldset>
+            <fieldset class="choice-picker">
+              <legend>Pilih bahasa</legend>
+              <label><input type="radio" name="language" value="id" checked><span><b>Indonesia</b><small>78 ribu kata</small></span></label>
+              <label><input type="radio" name="language" value="jv"><span><b>Jawa</b><small>19 ribu kata</small></span></label>
+            </fieldset>
+          </div>
 
           <fieldset class="time-picker" id="time-picker">
             <legend>Pilih waktu per pemain</legend>
@@ -76,7 +89,7 @@
         <p>Bagikan tautan berikut. Permainan dimulai setelah dua pemain siap.</p>
         <div class="invite-link-box"><span id="invite-link"></span><button id="copy-invite" type="button">Salin link</button></div>
         <button class="share-button" id="share-invite" type="button">Bagikan undangan</button>
-        <div class="room-meta"><span>Kode <b id="lobby-code"></b></span><span>Waktu <b id="lobby-time"></b></span></div>
+        <div class="room-meta"><span>Kode <b id="lobby-code"></b></span><span>Waktu <b id="lobby-time"></b></span><span>Bahasa <b id="lobby-language"></b></span></div>
       </div>
       <div class="players-lobby">
         <article class="lobby-player" id="lobby-player-1"><div class="avatar">1</div><div><span>Pemain 1</span><strong>Menunggu...</strong></div><i>Belum siap</i></article>
@@ -110,7 +123,7 @@
         </div>
 
         <aside class="game-panel">
-          <div class="panel-heading"><div><p class="eyebrow">Pertandingan daring</p><h2 id="panel-title">Rangkai kata terbaik</h2></div><span class="live-badge"><i></i> Live</span></div>
+          <div class="panel-heading"><div><p class="eyebrow" id="match-type">Pertandingan daring</p><h2 id="panel-title">Rangkai kata terbaik</h2></div><span class="live-badge"><i></i><b id="game-language">Bahasa Indonesia</b></span></div>
           <div class="turn-card"><span>Status giliran</span><strong id="turn-card-message">Menunggu data permainan</strong><p id="online-status">Menghubungkan kedua pemain...</p></div>
           <div class="score-preview"><span>Pratinjau nilai</span><strong><b id="preview-score">0</b> poin</strong></div>
           <div class="action-stack"><button class="primary-button" id="play-word" type="button">Mainkan kata</button><button class="secondary-button" id="pass-turn" type="button">Lewati giliran</button></div>
@@ -126,7 +139,7 @@
   <dialog class="help-dialog" id="help-dialog">
     <button class="dialog-close" id="close-help" type="button" aria-label="Tutup panduan">x</button>
     <p class="eyebrow">Cara bermain</p><h2>Susun, sambungkan, menangkan.</h2>
-    <ol><li>Masuk sebagai guest dan buat atau gabung ke ruang.</li><li>Bagikan invitation link sampai dua pemain bergabung.</li><li>Susun huruf saat mendapat giliran sebelum waktumu habis.</li><li>Kata utama dan silang diperiksa oleh kamus Indonesia di server.</li><li>Pemain dengan skor akhir tertinggi menjadi pemenang.</li></ol>
+    <ol><li>Pilih lawan bot atau teman, lalu tentukan Bahasa Indonesia atau Jawa.</li><li>Untuk teman, bagikan invitation link sampai dua pemain bergabung.</li><li>Susun huruf saat mendapat giliran sebelum waktumu habis.</li><li>Kata utama dan silang diperiksa sesuai bahasa permainan.</li><li>Jika kata ditolak, huruf otomatis kembali ke rak.</li></ol>
   </dialog>
 
   <dialog class="result-dialog" id="result-dialog">

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node rules.test.mjs && node smoke-test.mjs",
+    "test": "node rules.test.mjs && node bot-game.test.mjs && node smoke-test.mjs",
     "test:e2e": "node e2e-test.mjs"
   }
 }

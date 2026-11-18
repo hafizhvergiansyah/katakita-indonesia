@@ -6,6 +6,7 @@ create table if not exists public.rooms (
   status text not null default 'waiting' check (status in ('waiting','playing','finished')),
   host_id uuid not null references auth.users(id) on delete cascade,
   time_limit_ms integer not null check (time_limit_ms in (300000,600000,900000,1800000)),
+  language text not null default 'id' check (language in ('id','jv')),
   current_player_id uuid references auth.users(id),
   turn_started_at timestamptz,
   turn_no integer not null default 1,
@@ -56,20 +57,27 @@ create table if not exists public.valid_words (
   word text primary key check (word ~ '^[a-z]{2,15}$')
 );
 
+create table if not exists public.valid_words_javanese (
+  word text primary key check (word ~ '^[a-z]{2,15}$')
+);
+
 alter table public.rooms enable row level security;
 alter table public.room_players enable row level security;
 alter table public.game_private enable row level security;
 alter table public.moves enable row level security;
 alter table public.valid_words enable row level security;
+alter table public.valid_words_javanese enable row level security;
 
 create or replace function public.is_room_member(p_room_id uuid)
 returns boolean language sql stable security definer set search_path=public as $$
   select exists(select 1 from public.room_players where room_id=p_room_id and user_id=auth.uid());
 $$;
 
-create or replace function public.is_valid_word(p_word text)
+create or replace function public.is_valid_word(p_word text,p_language text)
 returns boolean language sql stable security definer set search_path=public as $$
-  select exists(select 1 from public.valid_words where word=lower(p_word));
+  select case when p_language='jv'
+    then exists(select 1 from public.valid_words_javanese where word=lower(p_word))
+    else exists(select 1 from public.valid_words where word=lower(p_word)) end;
 $$;
 
 create policy "members read rooms" on public.rooms for select to authenticated using (public.is_room_member(id));
@@ -105,18 +113,19 @@ returns text[] language sql volatile as $$
   )) as letter;
 $$;
 
-create or replace function public.create_room(p_name text,p_time_limit_ms integer)
+create or replace function public.create_room(p_name text,p_time_limit_ms integer,p_language text)
 returns jsonb language plpgsql security definer set search_path=public as $$
 declare v_room public.rooms; v_code text;
 begin
   if auth.uid() is null then raise exception 'Sesi guest tidak valid.'; end if;
   if char_length(trim(p_name)) not between 1 and 20 then raise exception 'Nama harus 1 sampai 20 karakter.'; end if;
   if p_time_limit_ms not in (300000,600000,900000,1800000) then raise exception 'Pilihan waktu tidak valid.'; end if;
+  if p_language not in ('id','jv') then raise exception 'Pilihan bahasa tidak valid.'; end if;
   loop
     v_code:=upper(substr(replace(gen_random_uuid()::text,'-',''),1,6));
     exit when not exists(select 1 from public.rooms where code=v_code);
   end loop;
-  insert into public.rooms(code,host_id,time_limit_ms) values(v_code,auth.uid(),p_time_limit_ms) returning * into v_room;
+  insert into public.rooms(code,host_id,time_limit_ms,language) values(v_code,auth.uid(),p_time_limit_ms,p_language) returning * into v_room;
   insert into public.room_players(room_id,user_id,seat,display_name,remaining_ms) values(v_room.id,auth.uid(),1,trim(p_name),p_time_limit_ms);
   return jsonb_build_object('room_id',v_room.id,'code',v_room.code);
 end $$;
@@ -266,7 +275,7 @@ begin
     else v_score:=v_score+public.letter_score(v_letter); end if;
     v_row:=v_row+v_step_row; v_col:=v_col+v_step_col;
   end loop;
-  if not public.is_valid_word(v_word) then raise exception 'Kata tidak ada di kamus: %',upper(v_word); end if;
+  if not public.is_valid_word(v_word,v_room.language) then raise exception 'Kata tidak ada di kamus: %',upper(v_word); end if;
   v_score:=v_score*v_word_multiplier;
   for v_value in 1..cardinality(v_rows) loop
     v_row:=v_rows[v_value]; v_col:=v_cols[v_value];
@@ -284,7 +293,7 @@ begin
       v_row:=v_row+v_step_row; v_col:=v_col+v_step_col;
     end loop;
     if v_cross_length>1 then
-      if not public.is_valid_word(v_cross_word) then raise exception 'Kata silang tidak ada di kamus: %',upper(v_cross_word); end if;
+      if not public.is_valid_word(v_cross_word,v_room.language) then raise exception 'Kata silang tidak ada di kamus: %',upper(v_cross_word); end if;
       v_score:=v_score+(v_cross_score*v_cross_multiplier);
     end if;
   end loop;
@@ -355,10 +364,10 @@ begin
   return public.get_room_snapshot(p_room_id);
 end $$;
 
-revoke all on public.rooms,public.room_players,public.game_private,public.moves,public.valid_words from anon,authenticated;
-revoke all on function public.is_valid_word(text) from public,anon,authenticated;
+revoke all on public.rooms,public.room_players,public.game_private,public.moves,public.valid_words,public.valid_words_javanese from anon,authenticated;
+revoke all on function public.is_valid_word(text,text) from public,anon,authenticated;
 grant select on public.rooms,public.room_players,public.moves to authenticated;
-grant execute on function public.is_room_member(uuid),public.create_room(text,integer),public.join_room(text,text),public.set_ready(uuid,boolean),public.get_room_snapshot(uuid),public.play_move(uuid,jsonb),public.pass_turn(uuid),public.resign_game(uuid),public.claim_timeout(uuid) to authenticated;
+grant execute on function public.is_room_member(uuid),public.create_room(text,integer,text),public.join_room(text,text),public.set_ready(uuid,boolean),public.get_room_snapshot(uuid),public.play_move(uuid,jsonb),public.pass_turn(uuid),public.resign_game(uuid),public.claim_timeout(uuid) to authenticated;
 
 do $$ begin
   if not exists(select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='rooms') then alter publication supabase_realtime add table public.rooms; end if;

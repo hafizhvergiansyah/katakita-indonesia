@@ -170,7 +170,7 @@ async function main() {
 
     await evaluate(active, `document.querySelector('#tile-rack .rack-tile').click();document.querySelector('.cell[data-row="7"][data-col="7"]').click();document.querySelector('#play-word').click()`);
     await waitFor(active, `document.querySelector('#toast').textContent.includes('Kata tidak ada di kamus')`, 'checker menolak satu huruf');
-    await evaluate(active, `document.querySelector('#recall-tiles').click()`);
+    assert.equal(await evaluate(active, `document.querySelectorAll('#game-board .board-tile.new').length`), 0);
 
     const startColumn = 7 - Math.floor(word.length / 2);
     for (const [offset, letter] of [...word.toUpperCase()].entries()) {

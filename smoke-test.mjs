@@ -1,9 +1,10 @@
 ﻿import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [html, app, backend, schema, styles] = await Promise.all([
+const [html, app, bot, backend, schema, styles] = await Promise.all([
   readFile(new URL("./index.html", import.meta.url), "utf8"),
   readFile(new URL("./js/app.js", import.meta.url), "utf8"),
+  readFile(new URL("./js/bot-game.js", import.meta.url), "utf8"),
   readFile(new URL("./js/backend.js", import.meta.url), "utf8"),
   readFile(new URL("./supabase/schema.sql", import.meta.url), "utf8"),
   readFile(new URL("./multiplayer.css", import.meta.url), "utf8")
@@ -14,7 +15,11 @@ const dictionary = await readFile(new URL('./supabase/migrations/20261117084500_
 assert.match(html, /id="guest-form"/);
 assert.match(html, /id="lobby-screen"/);
 assert.match(html, /id="game-board"/);
+assert.match(html, /name="opponent"/);
+assert.match(html, /name="language"/);
 assert.match(app, /subscribeToRoom/);
+assert.match(app, /tidak ada di kamus.*recallTiles/s);
+assert.match(bot, /findBotMove/);
 assert.match(app, /bindTileDrag/);
 assert.match(app, /pointerdown/);
 assert.match(app, /const form=event\.currentTarget/);
