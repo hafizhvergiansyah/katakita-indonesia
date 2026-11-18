@@ -6,6 +6,7 @@ Permainan susun kata untuk melawan bot lokal atau teman secara daring. Pemain da
 
 - Guest tanpa email atau password
 - Mode lawan bot yang berjalan langsung di browser
+- Bot memiliki jeda berpikir dan tidak selalu memilih langkah bernilai tertinggi
 - Pilihan kamus Bahasa Indonesia atau Jawa
 - Invitation link dan kode ruang enam karakter
 - Dua pemain realtime dengan status online

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createBotGame, evaluateMove, findBotMove, getBotSnapshot, playBotGameMove } from "./js/bot-game.js";
+import { readFile } from "node:fs/promises";
 
 const dictionary = new Set(["KATA", "ATA"]);
 const firstMove = [
@@ -22,4 +23,5 @@ globalThis.fetch = async () => ({ ok: true, text: async () => "aa\nata\nkata\n" 
 const localGame = await createBotGame({ playerName: "Tester", timeLimit: 300000, language: "id" });
 await assert.rejects(playBotGameMove([{ row: 7, col: 7, rack_index: 0 }]), /tidak ada di kamus/i);
 assert.equal(getBotSnapshot().players[0].remaining_ms, localGame.players[0].remaining_ms);
+assert.match(await readFile(new URL("./js/bot-game.js", import.meta.url), "utf8"), /BOT_THINK_MIN_MS = 2500/);
 console.log("Bot game test KataKita lulus.");

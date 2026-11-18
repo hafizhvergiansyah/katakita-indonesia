@@ -2,6 +2,8 @@ import { premiumAt, tileValue, validatePlacement } from "./rules.js";
 
 export const LOCAL_PLAYER_ID = "local-player";
 const BOT_ID = "local-bot";
+const BOT_THINK_MIN_MS = 2500;
+const BOT_THINK_MAX_MS = 5500;
 const LETTER_BAG = "A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,A,B,B,B,B,C,C,C,D,D,D,D,D,E,E,E,E,E,E,E,E,F,F,G,G,G,G,G,H,H,H,H,I,I,I,I,I,I,I,I,I,I,J,K,K,K,K,L,L,L,L,L,M,M,M,M,M,N,N,N,N,N,N,N,N,N,O,O,O,O,O,O,P,P,P,P,Q,R,R,R,R,R,R,R,S,S,S,S,S,S,S,T,T,T,T,T,T,U,U,U,U,U,U,V,V,W,W,X,Y,Y,Z".split(",");
 const dictionaryCache = new Map();
 let game = null;
@@ -115,35 +117,47 @@ function placementsForWord(board, rack, word, startRow, startCol, horizontal) {
 
 export function findBotMove(board, rack, dictionary) {
   if (!Object.keys(board).length) {
+    const choices = [];
     for (const word of dictionary.words) {
       if (word.length > 7) continue;
       const placements = placementsForWord(board, rack, word, 7, 7 - Math.floor(word.length / 2), true);
       if (!placements) continue;
-      try { evaluateMove(board, rack, placements, dictionary.set); return placements; } catch {}
+      try { evaluateMove(board, rack, placements, dictionary.set); choices.push(placements); } catch {}
+      if (choices.length >= 12) break;
     }
-    return null;
+    return choices[Math.floor(Math.random() * choices.length)] || null;
   }
 
-  let best = null;
+  const choices = [];
   let attempts = 0;
+  let scanned = 0;
   for (const [key, letter] of Object.entries(board)) {
     const [anchorRow, anchorCol] = key.split("-").map(Number);
     for (const word of dictionary.index.get(letter) || []) {
       for (let offset = word.indexOf(letter); offset >= 0; offset = word.indexOf(letter, offset + 1)) {
         for (const horizontal of [true, false]) {
+          scanned += 1;
+          if (scanned >= 50000) {
+            const choice = choices[Math.floor(Math.random() * choices.length)];
+            return choice?.placements || null;
+          }
           const placements = placementsForWord(board, rack, word, anchorRow - (horizontal ? 0 : offset), anchorCol - (horizontal ? offset : 0), horizontal);
           if (!placements) continue;
           attempts += 1;
           try {
             const result = evaluateMove(board, rack, placements, dictionary.set);
-            if (!best || result.score > best.score) best = { placements, score: result.score };
+            choices.push({ placements, score: result.score });
           } catch {}
-          if (attempts >= 20000) return best?.placements || null;
+          if (choices.length >= 16 || attempts >= 8000) {
+            const choice = choices[Math.floor(Math.random() * choices.length)];
+            return choice?.placements || null;
+          }
         }
       }
     }
   }
-  return best?.placements || null;
+  const choice = choices[Math.floor(Math.random() * choices.length)];
+  return choice?.placements || null;
 }
 
 function player(id) { return game.players.find(item => item.user_id === id); }
@@ -227,7 +241,8 @@ export function claimBotTimeout() {
 }
 export async function runBotTurn() {
   if (!game || game.room.status !== "playing" || game.room.current_player_id !== BOT_ID) return snapshot();
-  await new Promise(resolve => window.setTimeout(resolve, 650));
+  const thinkTime = BOT_THINK_MIN_MS + Math.random() * (BOT_THINK_MAX_MS - BOT_THINK_MIN_MS);
+  await new Promise(resolve => window.setTimeout(resolve, thinkTime));
   try {
     const move = findBotMove(game.room.board, game.racks[BOT_ID], game.dictionary);
     return move ? playFor(BOT_ID, move) : passBotTurn(BOT_ID);
